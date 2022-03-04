@@ -57,5 +57,60 @@ export class User {
     return this.data[propName];
   }
 }
+
+// index.ts
+import { User } from "./models/User";
+
+const user = new User( {name: 'myname', age: 20 });
+
+console.log(user.get('name'));
+console.log(user.get('age'));
+```
+
+###  User set() method
+```typescript
+  set(update: UserProps): void {
+    Object.assign(this.data, update);
+  }
+```
+> Object.assign() takes the data from `update` and overwrites the data in `this.data`.
+
+```typescript
+// index.ts
+import { User } from "./models/User";
+
+const user = new User( {name: 'myname', age: 20 });
+
+console.log(user.get('name')); // myname
+console.log(user.get('age')); // 20
+
+user.set({ name: 'newname', age: 9999 });
+
+console.log(user.get('name')); // newname
+console.log(user.get('age')); // 9999
+```
+
+> Issue: can not update only ONE property. 
+> If we try to only update `name` we get an error.
+
+Can solve issue by changing properties in `interface UserProps` to **optional.** Do this by adding `?` beside the optional property names.
+```typescript
+interface UserProps {
+  name?: string;
+  age?: number;
+}
+
+// index.ts
+import { User } from "./models/User";
+
+const user = new User( {name: 'myname', age: 20 });
+
+console.log(user.get('name'));
+console.log(user.get('age'));
+
+user.set({ name: 'newname'}); // this will now work
+
+console.log(user.get('name'));
+console.log(user.get('age'));
 ```
 
