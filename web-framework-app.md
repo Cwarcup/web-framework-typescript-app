@@ -42,7 +42,7 @@ class User
 - save(): Promise
   - **saves** some data about this user to the server.
 
-# Composition
+# Composition class User
 
 ```typescript
 interface UserProps {
@@ -114,3 +114,57 @@ console.log(user.get('name'));
 console.log(user.get('age'));
 ```
 
+### class User on() and trigger() method
+`on(eventName: string, callback: () => {})`
+Used to **register** an event handler with this object, so other parts of the app know when something changes.
+
+`trigger` runs all the callback functions that have been registered by `on()`.
+
+---
+- indicate that `callback` is going to be a function by stating `() => void`.
+- could also create a **type alias** for `() => void`.
+```typescript
+type Callback = () => void
+class User {
+  on(eventName: string, callback: Callback) {
+// ...
+  }
+}
+```
+`eventName` could be 'click', 'hover', 'mouseover'. Need to be able to receive events and store them.
+
+Will use an object to store all the types of callbacks.
+**Keys** of the object will be **event names**. The **values** will be **arrays of all the Callbacks**.
+
+Will store this property in class User:
+```typescript
+events: { [key: string]: Callback[] } = {};
+```
+> `[key: string]` could be any event. "click" "hoverover". This will store our event names. 
+> ` Callback[]` states that the values will be an array of callback functions. 
+
+```typescript
+  on(eventName: string, callback: Callback): void {
+    const handlers = this.data[eventName] || [];
+    handlers.push(callback);
+    this.events[eventName] = handlers;
+  }
+```
+```typescript
+// index.ts
+
+import { User } from "./models/User";
+
+const user = new User( {name: 'myname', age: 20 });
+
+user.on('change-any-event', () => {
+
+});
+
+console.log(user);
+// User {data: {…}, events: {…}}
+// data: {name: 'myname', age: 20}
+// events: {change-any-event: Array(1)}
+// [[Prototype]]: Object
+```
+> we can confirm the `on()` method is working.
