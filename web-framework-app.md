@@ -168,3 +168,43 @@ console.log(user);
 // [[Prototype]]: Object
 ```
 > we can confirm the `on()` method is working.
+
+## Trigger event callbacks
+
+```typescript
+// Users.ts
+trigger(eventName: string): void {
+    const handlers = this.events[eventName]; 
+    
+    //can be undefined when User is first created
+    if(!handlers || handlers.length === 0) {
+      return;
+    }
+
+    handlers.forEach((callback: Callback) => {
+      callback();
+    })
+  }
+
+  //index.ts
+  import { User } from "./models/User";
+
+const user = new User( {name: 'myname', age: 20 });
+
+user.on('change', () => {
+  console.log('change number one');
+});
+user.on('change', () => {
+  console.log('change number two');
+});
+user.on('save', () => {
+  console.log('save was triggered');
+});
+
+
+user.trigger('change')
+// change number one
+//change number two
+user.trigger('save')
+// save was triggered
+```
