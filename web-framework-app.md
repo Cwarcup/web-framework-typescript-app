@@ -5,6 +5,11 @@ Setup parcel:
 npm i -g parcel-bundler
 parcel index.html
 ```
+start json-server
+```
+json-server --watch db.json
+```
+> Need both json-server and parcel running at the same time. 
 ## Framework Structure
 
 Inside our framework we will have two types of **classes.**
@@ -208,3 +213,43 @@ user.trigger('change')
 user.trigger('save')
 // save was triggered
 ```
+
+# Adding JSON Server
+
+- uses [JSON server from npm.](https://www.npmjs.com/package/json-server)
+  - can receive information and store it in a json file.
+
+```
+npm install -g json-server
+```
+Whenever we run  `json-server` we need to point it to a actual json file which will save our data. 
+
+Create a `db.json` file with some data.
+```json
+{
+  "users": []
+}
+```
+> Tells json-server that we are going to serve up a resource called 'users'. json-server will then create routes for us. 
+
+Start JSON Server
+```
+json-server --watch db.json
+```
+json-server routes your 'user' to http://localhost:3000/users 
+
+---
+
+Want to use **axios** to communicate with our User model and the server.
+
+Install Axios:
+```
+npm install axios
+```
+
+then start parcel:
+```
+parcel index.html
+```
+
+# REST Conventions
