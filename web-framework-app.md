@@ -298,3 +298,34 @@ const user = new User({ id: 3 });
 
 user.fetch();
 ```
+
+## Save()
+
+Have to check to see if our user has an ID.
+If they have an ID, need to use **PUT** method because we are **updating** information on the server. 
+If no ID is found, then we need to use **POST** method, because we are creating a new user. 
+
+```typescript
+save(): void {
+    const id = this.get('id');
+
+    if(id) {
+      // put
+      axios.put(`http://localhost:3000/users/${id}`, this.data)
+    } else {
+      // post
+      axios.post('http://localhost:3000/users', this.data)
+    }
+  }
+
+// index.ts
+import { User } from './models/User';
+
+const user = new User({ id: 1 });
+
+user.set({ name: 'NEW NAME', age: 9999 });
+
+user.save();
+```
+> after saving and running parcel and json-server, then you should see db.json update the new information. This is using the put method. 
+> 
