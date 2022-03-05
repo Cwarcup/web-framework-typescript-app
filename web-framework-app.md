@@ -253,3 +253,48 @@ parcel index.html
 ```
 
 # REST Conventions
+| Methods	|       Path     |      Result    |
+| ------- | ------------- | -------------- |
+|  GET   	|  /posts       | retrieve all posts |
+|  GET  	|  /posts/:id   | retrieve posts with the given ID |
+|  POST   |  /posts       |  create a new post |
+|  PUT    |  /posts/:id   |  update a post |
+|  DELETE |  /posts:id    | deletes a post |
+
+```typescript
+//index.ts
+import axios from 'axios';
+
+axios.post('http://localhost:3000/users', {
+  name: 'myName',
+  age: 20
+})
+
+
+// in Dev tools Network XHR
+{name: "myName", age: 20, id: 19}
+age: 20
+id: 19
+name: "myName"
+```
+
+All our models that need to be synced with a server need an 'ID' property. 
+If a User does NOT have an ID, then this means it is NOT on the server. 
+
+## Fetch Method
+```typescript
+  fetch(): void {
+    axios
+      .get(`http://localhost:3000/users/${this.get('id')}`)
+      .then((response: AxiosResponse): void => {
+        this.set(response.data)
+      })
+  }
+
+ // index.ts
+ import { User } from './models/User';
+
+const user = new User({ id: 3 });
+
+user.fetch();
+```

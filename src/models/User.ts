@@ -1,4 +1,7 @@
+import axios, { AxiosResponse } from 'axios';
+
 interface UserProps {
+  id?: number;
   name?: string;
   age?: number;
 }
@@ -9,7 +12,7 @@ export class User {
   events: { [key: string]: Callback[] } = {};
 
   constructor(private data: UserProps) {}
-
+  // access properties on our User
   get(propName: string): (number | string) {
     return this.data[propName];
   }
@@ -35,5 +38,13 @@ export class User {
     handlers.forEach((callback: Callback) => {
       callback();
     })
+  }
+
+  fetch(): void {
+    axios
+      .get(`http://localhost:3000/users/${this.get('id')}`)
+      .then((response: AxiosResponse): void => {
+        this.set(response.data)
+      })
   }
 }
