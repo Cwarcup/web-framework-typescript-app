@@ -328,4 +328,133 @@ user.set({ name: 'NEW NAME', age: 9999 });
 user.save();
 ```
 > after saving and running parcel and json-server, then you should see db.json update the new information. This is using the put method. 
-> 
+
+# Refactoring with Composition
+Will be refactoring the class **User** to extract the various methods inside it. We currently have a ton of functions (get, on, trigger, fetch and save).
+
+Goal: Have individual classes responsible for:
+- storing user data.
+- eventing logic.
+- persistance of data (save).
+---
+```typescript
+// Eventing.ts
+// implement class responsible for events tied to a User
+
+type Callback = () => void;
+
+export class Eventing {
+  events: { [key: string]: Callback[] } = {};
+
+  on(eventName: string, callback: Callback): void {
+    const handlers = this.events[eventName] || []; //can be undefined when User is first created
+    handlers.push(callback);
+    this.events[eventName] = handlers;
+  }
+
+  trigger(eventName: string): void {
+    const handlers = this.events[eventName]; 
+    
+    //can be undefined when User is first created
+    if(!handlers || handlers.length === 0) {
+      return;
+    }
+
+    handlers.forEach((callback: Callback) => {
+      callback();
+    })
+  }
+}
+```
+### Re-integrating attributes, events and sync
+In the end, we want clasS **User** to have properties:
+- **attributes: Attribute**
+  - gives us the ability to **store** properties of the User (name, age, etc.).
+- **events: Events**
+  - gives us the ability to **tell other parts of our app** whenever data tied to a particular User is changed.
+- **sync: Sync**
+  - gives us the ability to **save** this persons data to a **remote server**, then retrieve it in the future. 
+
+---
+**Option 1:**
+We will only accept dependencies into the constructor of `User` class.
+This will define a **static class method** to pre-configure `User` and **assign properties afterwards.**
+
+```typescript
+export class User {
+  static fromData(data: UserProps): User {
+    const user = new User(new Eventing());
+    user.set(data);
+    return user;
+  }
+
+  private data: UserProps;
+  
+  constructor(private data: Eventing) {}
+  //...
+}
+```
+
+However, we run into some issues.
+- Have to initialize `user` every time. What is we had a class that requires lots of things to be initialized when we create it.
+  - `user.set(data);` is only one line of code here, but could become very long in the future. 
+
+---
+
+**Option 2:**
+- constructor accepts **properties**.
+- **hard code** dependencies as a **class property.**
+> will be going forward with this option.
+
+```typescript
+export class User {
+  public events: Eventing = new Eventing();
+
+  constructor(private data: UserProps) {}
+  //...
+}
+
+// index.ts
+import { User } from './models/User';
+
+const user = new User({ name: 'new record', age: 0});
+
+user.events.on('change', () => {
+  console.log('Change was made!');
+});
+
+user.events.trigger('change');
+```
+
+### adding sync: Sync property to class User
+- remember, allows us to save and fetch information from our backend server.
+- want to extract both the fetch() and save() method from class User, and make then their own class.
+
+```typescript
+// new Sync.ts file
+import axios, { AxiosResponse } from 'axios';
+
+export class Sync {
+  fetch(): void {
+    axios
+      .get(`http://localhost:3000/users/${this.get('id')}`)
+      .then((response: AxiosResponse): void => {
+        this.set(response.data)
+      })
+  }
+
+  save(): void {
+    const id = this.get('id');
+
+    if(id) {
+      // put
+      axios.put(`http://localhost:3000/users/${id}`, this.data)
+    } else {
+      // post
+      axios.post('http://localhost:3000/users', this.data)
+    }
+  }
+}
+```
+**Issue:** we have a bunch of errors (set, get, data) because these refer to our class User. 
+
