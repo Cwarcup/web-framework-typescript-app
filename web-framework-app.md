@@ -457,4 +457,159 @@ export class Sync {
 }
 ```
 **Issue:** we have a bunch of errors (set, get, data) because these refer to our class User. 
+  
+
+**Possible Solutions**
+
+Option 1:
+**Serialize**: convert data from an object into some save-able format (json).
+**Deserialize**: put data on an object using some previously saved data (json). Json -> parse -> object.
+
+Possible solution: Sync expects arguments that satisfy the interfaces 'Serialize' and 'Deserialize'. 
+
+Option 2: Sync is turned into a **generic class** to customize the type of 'data' coming to save().
+- class User will contain `sync: Sync<UserProps>`
+- and class Sync<T> will be generic. 
+
+## Refactoring class Sync into a generic
+```typescript
+import axios, { AxiosPromise } from 'axios';
+import { UserProps } from './User';
+
+export class Sync {
+
+  constructor(public rootUrl: string) {}
+
+  fetch(id: number): AxiosPromise {
+    return axios.get(`${this.rootUrl}/${id}`)
+
+  }
+
+  save(data: UserProps): AxiosPromise {
+    const id = data.id;
+
+    if(id) {
+      // put
+      return axios.put(`${this.rootUrl}/${id}`, data)
+    } else {
+      // post
+      return axios.post(this.rootUrl, data)
+    }
+  }
+}
+```
+> So we have written this assuming are always using UserProps. Not generic yet. 
+
+Need to define an interface for the `id` property. We currently have an error on `id` because Typescript does not know what type of data it will be receiving. 
+```typescript
+import axios, { AxiosPromise } from 'axios';
+
+export class Sync<T> {
+
+  constructor(public rootUrl: string) {}
+
+  fetch(id: number): AxiosPromise {
+    return axios.get(`${this.rootUrl}/${id}`)
+  }
+
+  save(data: T): AxiosPromise {
+    const id = data.id;
+
+    if(id) {
+      return axios.put(`${this.rootUrl}/${id}`, data)
+    } else {
+      return axios.post(this.rootUrl, data)
+    }
+  }
+}
+```
+
+```typescript
+import axios, { AxiosPromise } from 'axios';
+
+interface HasId {
+  id: number;
+}
+
+export class Sync<T extends HasId>{
+
+  constructor(public rootUrl: string) {}
+
+  fetch(id: number): AxiosPromise {
+    return axios.get(`${this.rootUrl}/${id}`)
+  }
+
+  save(data: T): AxiosPromise {
+    const id = data.id;
+
+    if(id) {
+      return axios.put(`${this.rootUrl}/${id}`, data)
+    } else {
+      return axios.post(this.rootUrl, data)
+    }
+  }
+}
+```
+So now when we use Sync, we must take in a type which is defined by `HasId`, which must be a number. 
+
+Now need to wire up Sync back into User.
+```typescript
+
+import { Eventing } from './Eventing';
+import { Sync } from './Sync';
+
+
+export interface UserProps {
+  id?: number;
+  name?: string;
+  age?: number;
+}
+
+const rootUrl = 'http://localhost:3000/users'
+
+export class User {
+  public events: Eventing = new Eventing();
+  public sync: Sync<UserProps> = new Sync<UserProps>(rootUrl);
+
+  constructor(private data: UserProps) {}
+  // access properties on our User
+  get(propName: string): (number | string) {
+    return this.data[propName];
+  }
+
+  set(update: UserProps): void {
+    Object.assign(this.data, update);
+  }
+}
+
+```
+
+Have a new error: "Type 'UserProps' does not satisfy the constraint 'HasId'." under `UserProps`. 
+In Sync.ts, the `id` property in the interface HasId has property 'id', however it is not optional like it is in User.ts. Simple solution: make it optional. 
+```typescript
+//Sync.ts
+interface HasId {
+  id?: number;
+}
+```
+
+### creating attributes on class User
+
+- The constructor, get() and set() on class User are all attributes on user. 
+- We will be extracting these and creating a new Attributes model for them. 
+- Need to change Attributes into a generic class, just like we did with Sync.
+```typescript
+export class Attributes <T> {
+  constructor(private data: T) {}
+  // access properties on our User
+  get(propName: string): (number | string) {
+    return this.data[propName];
+  }
+  set(update: T): void {
+    Object.assign(this.data, update);
+  }
+}
+```
+> However, `get(propName: string): (number | string)` states we will always return a number or a string. It states we will ONLY store a number or a string. However this may not always be true. Lets change this. 
+
 
