@@ -612,4 +612,93 @@ export class Attributes <T> {
 ```
 > However, `get(propName: string): (number | string)` states we will always return a number or a string. It states we will ONLY store a number or a string. However this may not always be true. Lets change this. 
 
+# Important Rules in Typescript
+1. in TypeScript, **strings** can be types. 
+   `type Bestname = 'curtis';` 
+   `const printName = (name: BestName): void => {}`
+   - here in the function we are essentially saying you must call `printName` with ONLY 'curtis'. Only this will work: `printName('curtis')`.
+2. in JavaScript (and therefore TypeScript), all **object keys are string**.
+```javascript
+const colors = {};
+colors.red = 'red';
+ // 'red'
+colors[5] = 'red';
+console.log(colors) // {5: 'red', red: 'red'}
+// here it looks like 5 is a number.
+// however, it is a string
 
+console.log(colors['5']) // 'red'
+// we used a string for the key and it still worked.
+```
+In the background, when we declared `colors[5] = 'red'`, the [5] was first converted to a string, then set as a key. 
+
+Impact of these two rules together: **On an object, the keys of an object can actually be a type as well.**
+
+---
+
+```typescript
+export class Attributes <T> {
+  constructor(private data: T) {}
+  // access properties on our User
+  get<K extends keyof T>(key: K): T[K] {
+    return this.data[key];
+  }
+
+  set(update: T): void {
+    Object.assign(this.data, update);
+  }
+}
+```
+The letter K is not some special operator. It could be named anything (KeyOfObject).
+
+`<K extends keyof T>` sets up a **generic constraint** which limits the types that K can be. It limits K to one of the keys of T can be (number, string). We are imagining that T is only going to be UserProps for now.
+Remember:
+```typescript
+export interface UserProps {
+  id?: number;
+  name?: string;
+  age?: number;
+}
+```
+Type annotation `(key: K)` states we can only call `get()` with either 'name', 'age' or 'id'. 
+
+As a return value, ` T[K]` is basically a normal object lookup. Is the same as:
+```
+const colors = {red: 'red''};
+colors['red']
+```
+It looks at the UserProps interface, the key value (id, name or age), and returns the corresponding value (number, string or number).
+
+We are saying look at the interface of T, and return the value at the key of K.
+TypeScript will loop up the name, age or id, and return the corresponding type (string, number or number)
+
+---
+
+All together to test this out
+```typescript
+import { UserProps } from './User';
+
+export class Attributes <T> {
+  constructor(private data: T) {}
+  // access properties on our User
+
+  get<K extends keyof T>(key: K): T[K] {
+    return this.data[key];
+  }
+
+  set(update: T): void {
+    Object.assign(this.data, update);
+  }
+}
+
+const attrs = new Attributes<UserProps>({
+  id: 5,
+  age: 20,
+  name: 'Whatever'
+});
+
+const id = attrs.get('id'); // hover over id: returns number
+const name = attrs.get('name'); // hover over name: returns string
+const age = attrs.get('age'); // hover over age: returns number
+```
+> We get this behavior because of this extra syntax `<K extends keyof T>(key: K): T[K] `
