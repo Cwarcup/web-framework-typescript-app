@@ -702,3 +702,71 @@ const name = attrs.get('name'); // hover over name: returns string
 const age = attrs.get('age'); // hover over age: returns number
 ```
 > We get this behavior because of this extra syntax `<K extends keyof T>(key: K): T[K] `
+
+--- 
+Back in the Users.ts
+```typescript
+
+import { Attributes } from './Attributes';
+import { Eventing } from './Eventing';
+import { Sync } from './Sync';
+
+
+export interface UserProps {
+  id?: number;
+  name?: string;
+  age?: number;
+}
+
+const rootUrl = 'http://localhost:3000/users'
+
+export class User {
+  public events: Eventing = new Eventing();
+  public sync: Sync<UserProps> = new Sync<UserProps>(rootUrl);
+  public attributes: Attributes<UserProps> = new Attributes<UserProps>(<ERROR>)
+
+}
+
+```
+
+Get an error when creating a new Attributes because it has to accept some argument. However, this isn't great because we just want to be able to call `new User({name: 'sfsd', age: 13 })`, but if we hard code `new Attributes` with some arguments, this wont be possible. 
+
+Can fix this by creating a constructor which takes in the properties for the attributes.
+```typescript
+export class User {
+  public events: Eventing = new Eventing();
+  public sync: Sync<UserProps> = new Sync<UserProps>(rootUrl);
+  public attributes: Attributes<UserProps>;
+
+  constructor(attrs: UserProps) {
+    this.attributes = new Attributes<UserProps>(attrs)
+  }
+}
+```
+
+![where we are](noteImages/composition.png)
+
+We don't want to allow caller to reach directly into the methods in class Attributes, Eventing, and Sync. 
+Instead, we want Caller to use the class User, and use the methods defined in there. For example, Caller uses save(), which delegates the appropriate class. 
+
+![Direct Pass through](noteImages/directPassTrhough.png)
+
+More complicated coordinations:
+![complicated coordination](noteImages/complicatedPaths.png)
+
+---
+
+A quick reminder on **accessors**
+```typescript
+class Person {
+  constructor(public firstName: string, public lastName: string) {}
+
+  fullName(): string {
+    return `${this.firstName} ${this.lastName}`;
+  }
+}
+
+const person = new Person('firstname', 'lastname');
+console.log(person.fullName()); // firstname lastname
+
+```
