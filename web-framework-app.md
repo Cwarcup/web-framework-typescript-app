@@ -1221,6 +1221,38 @@ export class userForm {
     this.parent.append(templateElement.content);
   }
 }
+
+//index.ts to test
+import { UserForm } from './views/UserForm'
+
+const userForm = new UserForm(
+  document.getElementById('root')
+)
+
+userForm.render();
 ```
 
+## Event Map
+
+Timeline:
+1. call 'render' method.
+2. render calls 'template', hets HTML string
+3. Render inserts HTML string into a template element.
+4. we should somehow bind **event handlers **into the HTML in there.
+5. Render inserts content of template into DOM.
+
+```typescript
+  eventsMap() {
+    return {
+      'click:button': this.onButtonClick,
+      'hover:h1': this.onHoverHeaver,
+      'drag:div': this.onDragDiv
+    }
+  }
+  onButtonClick(): void {
+    console.log('hi there');
+  }
+  ```
+  > Our goal is to have a very meaningful key.
+  > We need to somehow pass the key, parse at the colon. For example, `'click:button': this.onButtonClick,` would split and produce a `click` event on the element `button`.
 
