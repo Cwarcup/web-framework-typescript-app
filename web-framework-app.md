@@ -1169,3 +1169,58 @@ export class Collection {
 ```
 
 K will specify the type of data we get back.
+
+# Adding HTML
+
+- UserShow will display User details (name, age).
+- UserForm will allow input, update name, set random age, save data.
+- Both UserShow and UserForm will be nested in UserEdit.
+- Hierarchy:
+  - UserEdit
+    - UserShow and UserFrom
+---
+- Each view **must** produce HTML.
+- We should be able to nest one views HTML into another.
+- We need to have a good way to **handle user events** (clicking, typing).
+- There will probably be **tight coupling** between a view and a model.
+- We need to be able to reach into the HTML produced by a view and **get specific information.**
+
+## Class UserForm
+
+- Parent: Element
+  - will be a reference to an element in the DOM. 
+  - will be used by render()
+- template(): string
+  - returns a string that contains some amount of HTML we want to show to the user. 
+  - may return a text input and 3 buttons.
+    - form with a label and input.
+- render(): void
+  - wants to take the HTML from template, and inserts it into the DOM.
+  - will take the form, label and input and append it to the parent **property** (above).
+    - this will be some element that already exists in our DOM.
+
+**[Template Element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template)**: used to take a string and turn it into something usable by the HTML DOM. 
+
+```typescript
+export class userForm {
+  constructor(public parent: Element) {}
+      // returns a string that contains some amount of HTML we want to show to the user
+  template(): string {
+    return `
+    <div>
+      <h1>User Form</h1>
+      <input />
+    </div>
+    `;
+  }
+      //  wants to take the HTML from template, and inserts it into the DOM.
+  render(): void {
+    const templateElement = document.createElement('template');
+    templateElement.innerHTML = this.template();
+
+    this.parent.append(templateElement.content);
+  }
+}
+```
+
+
