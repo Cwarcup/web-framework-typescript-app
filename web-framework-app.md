@@ -993,7 +993,7 @@ To fix this, we can use **inheritance.** This allows us to access all the proper
 # Extracting Methods from User to class Model
 
 ```typescript
-import { AxiosPromise } from "axios";
+import { AxiosPromise, AxiosResponse } from "axios";
 
 // need this to be a generic<T>
 interface ModelAttributes<T> {
@@ -1012,8 +1012,83 @@ interface Events {
   trigger(eventName: string): void;
 }
 
-export class Model {
+interface HasId {
+  id?: number;
+}
+
+export class Model<T extends HasId> {
+  constructor(
+    private attributes: ModelAttributes<T>,
+    private events: Events,
+    private sync: Sync<T>
+  ){}
+
+  get on() {
+    return this.events.on;
+  }
+
+  get trigger() {
+    return this.events.trigger;
+  }
+
+  get get() {
+    return this.attributes.get;
+  }
+
+  set(update: T): void {
+    this.attributes.set(update);
+    this.events.trigger('change');
+  }
+
+  fetch(): void {
+    const id = this.get('id');
+
+    if (typeof id !== 'number') {
+      throw new Error('Cannot fetch without an id');
+    }
+
+    this.sync.fetch(id).then(
+      (response: AxiosResponse): void => {
+        this.set(response.data);
+      }
+    );
+  }
+
+  save(): void {
+    this.sync.save(this.attributes.getAll())
+      .then((response: AxiosResponse): void => {
+        this.trigger('save');
+      })
+      .catch(() => {
+        this.trigger('error');
+      })
+  }
 }
 ```
 
+[More in depth](https://www.udemy.com/course/typescript-the-complete-developers-guide/learn/lecture/15067010#overview)
 
+```typescript
+//in user.ts
+
+import { Model } from "./Models";
+
+export interface UserProps {
+  id?: number;
+  name?: string;
+  age?: number;
+}
+
+const rootUrl = 'http://localhost:3000/users';
+
+export class User extends Model<UserProps> {
+  static buildUser(attrs: UserProps): User {
+    return new User(
+      new Attributes<UserProps>(attrs),
+      new Eventing(),
+      new ApiSync<UserProps>(rootUrl)
+    )
+  }
+}
+```
+Now anytime we want to create a new user we will be passing in the starting attributes (attrs), which will create a new **instance of user,** initializing Attributess, Eventing and ApiSync.
