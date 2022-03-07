@@ -1292,3 +1292,6 @@ export class UserForm {
 ```
 
 Can add in a class in your html template and **target the class** with `'click:.set-age': this.onSetAgeClick`.
+
+# Reusable Logic
+

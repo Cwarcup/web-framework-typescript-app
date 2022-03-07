@@ -24,8 +24,10 @@ export class UserForm {
 
   onSetNameClick = ():void => {
     const input = this.parent.querySelector('input');
-    const name = input.value;
-    this.model.set({name});
+    if(input) {
+      const name = input.value;
+      this.model.set({name});
+    }
   }
 
       // returns a string that contains some amount of HTML we want to show to the user
