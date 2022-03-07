@@ -5,22 +5,21 @@ type Callback = () => void;
 export class Eventing {
   events: { [key: string]: Callback[] } = {};
 
-  on(eventName: string, callback: Callback): void {
-    const handlers = this.events[eventName] || []; //can be undefined when User is first created
+  on = (eventName: string, callback: Callback): void => {
+    const handlers = this.events[eventName] || [];
     handlers.push(callback);
     this.events[eventName] = handlers;
-  }
+  };
 
-  trigger(eventName: string): void {
-    const handlers = this.events[eventName]; 
-    
-    //can be undefined when User is first created
-    if(!handlers || handlers.length === 0) {
+  trigger = (eventName: string): void => {
+    const handlers = this.events[eventName];
+
+    if (!handlers || handlers.length === 0) {
       return;
     }
 
-    handlers.forEach((callback: Callback) => {
+    handlers.forEach(callback => {
       callback();
-    })
-  }
+    });
+  };
 }

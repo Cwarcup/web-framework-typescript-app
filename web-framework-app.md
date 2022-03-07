@@ -753,10 +753,11 @@ Instead, we want Caller to use the class User, and use the methods defined in th
 
 More complicated coordinations:
 ![complicated coordination](noteImages/complicatedPaths.png)
+For class User methods such as `fetch`, we need to access the `get()` method on `class Attributes`, and then call the `fetch()` method on `class Sync`.
 
 ---
 
-A quick reminder on **accessors**
+A quick reminder on **accessors or getters**
 ```typescript
 class Person {
   constructor(public firstName: string, public lastName: string) {}
@@ -769,4 +770,183 @@ class Person {
 const person = new Person('firstname', 'lastname');
 console.log(person.fullName()); // firstname lastname
 
+```
+
+Could write this as a **getter or setter**. 
+Done by adding the `get` keyword to the method.
+We do **not need to add `()` when we call the method. **
+```typescript
+class Person {
+  constructor(public firstName: string, public lastName: string) {}
+
+  get fullName(): string {
+    return `${this.firstName} ${this.lastName}`;
+  }
+}
+
+const person = new Person('firstname', 'lastname');
+console.log(person.fullName); // firstname lastname
+```
+
+## Passthrough Methods
+
+On Method in Users.ts
+```typescript
+  get on() {
+    return this.events.on;
+  }
+```
+
+Since we use a `getter`, we are referencing the `on` method on the class Eventing. 
+We can now call `user.on('change', () => console.log('user was changed');)`, referencing the class Eventing. 
+`user.on` invokes the **on method on class Eventing.**
+
+Complete the other methods:
+```typescript
+
+import { Attributes } from './Attributes';
+import { Eventing } from './Eventing';
+import { Sync } from './Sync';
+
+
+export interface UserProps {
+  id?: number;
+  name?: string;
+  age?: number;
+}
+
+const rootUrl = 'http://localhost:3000/users'
+
+export class User {
+  public events: Eventing = new Eventing();
+  public sync: Sync<UserProps> = new Sync<UserProps>(rootUrl);
+  public attributes: Attributes<UserProps>;
+
+  constructor(attrs: UserProps) {
+    this.attributes = new Attributes<UserProps>(attrs)
+  }
+
+  get on() {
+    return this.events.on;
+  }
+
+  get trigger() {
+    return this.events.trigger;
+  }
+
+  get get() {
+    return this.attributes.get;
+  }
+}
+```
+---
+
+However, if we try to run the get method inside index.ts, we get an error:
+```typescript
+import { User } from './models/User';
+
+const user = new User({ name: 'new record', age: 0});
+
+console.log(user.get('name')); // Uncaught TypeError: Cannot read properties of undefined (reading 'name')
+```
+Reminder on how 'this' works in javascript
+```typescript
+const colors = {
+  color: 'red',
+  printColor() {
+    console.log(this.color);
+  }
+}
+
+colors.printColor(); // red
+
+const printColor = colors.printColor;
+
+printColor(); // undefined. Because there is nothing to the left.
+```
+Rule of thumb, `this` will call on whatever is to the left of it. In this case (`colors.printColor()`), colors is to the left. 
+
+Can solve this issue by adding an **arrow function** to our `get` method in class Attributes.
+```typescript
+export class Attributes <T> {
+  constructor(private data: T) {}
+  // access properties on our User
+
+  get = <K extends keyof T>(key: K): T[K] => {
+    return this.data[key];
+  }
+
+  set(update: T): void {
+    Object.assign(this.data, update);
+  }
+}
+```
+> now `this` no matter what will ALWAYS be equal to our instance of class Attributes.
+
+Need to do the same thing for our Eventing.ts class.
+```typescript
+type Callback = () => void;
+
+export class Eventing {
+  events: { [key: string]: Callback[] } = {};
+
+  on = (eventName: string, callback: Callback): void => {
+    const handlers = this.events[eventName] || []; //can be undefined when User is first created
+    handlers.push(callback);
+    this.events[eventName] = handlers;
+  }
+
+  trigger = (eventName: string): void => {
+    const handlers = this.events[eventName]; 
+    
+    //can be undefined when User is first created
+    if(!handlers || handlers.length === 0) {
+      return;
+    }
+
+    handlers.forEach((callback: Callback) => {
+      callback();
+    })
+  }
+}
+```
+
+Can now test this in index.ts
+```typescript
+import { User } from './models/User';
+
+const user = new User({ name: 'new record', age: 0});
+
+console.log(user.get('name'));
+
+user.on('change', () => {
+  console.log('User was changed');
+});
+
+user.trigger('change');
+```
+
+## setup more complicated methods on class User
+
+**set()** and **fetch()**
+
+```typescript
+set(update: UserProps): void {
+    this.attributes.set(update);
+    this.events.trigger('change')
+  }
+
+fetch(): void {
+ const id = this.get('id');
+
+ if (typeof id !== 'number') {
+   throw new Error('Cannot fetch without an id');
+ }
+
+ this.sync.fetch(id).then(
+   (response: AxiosResponse): void => {
+     this.set(response.data);
+   }
+ );
+}
 ```
