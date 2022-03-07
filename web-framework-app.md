@@ -950,3 +950,70 @@ fetch(): void {
  );
 }
 ```
+### save()
+```typescript
+  save(): void {
+    this.sync.save(this.attributes.getAll())
+      .then((response: AxiosResponse): void => {
+        this.trigger('save');
+      })
+      .catch(() => {
+        this.trigger('error');
+      })
+  }
+
+//index.ts
+import { User } from './models/User';
+
+const user = new User({ id: 1, name: 'newer name', age: 0 });
+
+user.on('save', () => {
+  console.log(user);
+});
+
+user.save();
+```
+## Issues with our code at the moment:
+1. Using many **public** methods. We want others to use the get(), set(), on()... methods instead. NOT the events, sync and attributes.
+2. **Hardcoded** our sync method. We are currently ONLY accessing data from our json-server. What if we wanted to access data locally instead?
+3. Not using **interfaces**. 
+4. Right now we have a ton of functionality inside class User. What if we want a second class called BlogPost? We don't want to re-implement every method from User. Need to make it more **re-usable.**
+
+Possible Solutions:
+- Have a very simple class User.
+  - this would reference an **instance** of **class Model**, which would contain **all the methods (get, set, on, trigger, fetch, save).**
+  - would also allow you to add custom methods for class User (fullName(), isAdminUser()).
+  - Downside: would have to passthrough Model everytime we access a method from Model.
+    - for example, to access User name, it would be `user.model.get()`, but if we wanted to access fullName, it would just be use.fullName().
+    - to access different information we have to use completely different syntax.
+    - gets confusing because we have all these nested properties. 
+
+To fix this, we can use **inheritance.** This allows us to access all the properties of Model.
+
+# Extracting Methods from User to class Model
+
+```typescript
+import { AxiosPromise } from "axios";
+
+// need this to be a generic<T>
+interface ModelAttributes<T> {
+  set(value: T): void;
+  getAll(): T;
+  get<K extends keyof T>(key: K): T[K];
+}
+
+interface Sync<T> {
+  fetch(id: number): AxiosPromise;
+  save(data: T): AxiosPromise;
+}
+
+interface Events {
+  on(eventName: string, callback: () => void): void;
+  trigger(eventName: string): void;
+}
+
+export class Model {
+}
+```
+
+
