@@ -1092,3 +1092,40 @@ export class User extends Model<UserProps> {
 }
 ```
 Now anytime we want to create a new user we will be passing in the starting attributes (attrs), which will create a new **instance of user,** initializing Attributess, Eventing and ApiSync.
+
+# UserCollection class
+- will have a **models** property that will be an array of Users (User[]).
+
+```typescript
+import { Eventing } from "./Eventing";
+import { User } from "./User";
+
+export class Collection {
+  models: User[] = [];
+
+  events: Eventing = new Eventing();
+
+  get on() {
+    return this.events.on;
+  }
+  
+  get trigger() {
+    return this.events.trigger;
+  }
+}
+```
+- now need to parse the JSON data.
+
+```typescript
+import axios, { AxiosResponse } from "axios";
+
+axios.get('http://localhost:3000/users')
+  .then((response: AxiosResponse) => {
+    console.log(response.data);
+  })
+
+// in console we get back:
+/// {id: 1, name: 'newer name', age: 0}
+// {name: 'new record', age: 0, id: 2}
+
+```
