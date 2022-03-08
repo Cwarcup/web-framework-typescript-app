@@ -12,3 +12,13 @@ Features:
 - Update name
 - random age
 - save name and age to a backend server in order for data to persist
+
+Run:
+```
+// cd into app repo.
+
+parcel index.html
+
+json-server --watch db.json
+
+```
