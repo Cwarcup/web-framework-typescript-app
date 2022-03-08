@@ -1295,3 +1295,122 @@ Can add in a class in your html template and **target the class** with `'click:.
 
 # Reusable Logic
 
+How to extract usable logic from UserForm using **composition**.
+
+- Going to create a new class **HtmlRenderer**.
+  - will include all methods that we think could be used elsewhere.
+    - parent: Element
+    - model: User (but need to make it generic)
+    - render(): void
+      - needs a reference back to template on UserForm.
+    - bindEvents()
+      - needs reference to eventsMap on UserForm.
+    - bindModel()
+
+Because we have so many reference back to UserForm, it's probably best to **NOT** use **composition** and split up the methods.
+
+How would we do this with **inheritance**?
+
+- create new **abstract class** View
+  - class UserForm will **extend** from class View.
+  - with methods...
+    - parent: Element
+    - model: User
+    - render()
+      - has references to template() which will stay in class UserForm. Therefore, need to make this an **abstract class**.
+    - bindEvents()
+      - references eventsMap()
+    - bindModel()
+    - abstract template()
+    - abstract eventsMap()
+
+### Abstract class View
+
+Create View.ts
+```typescript
+
+import { User } from "../models/User";
+
+export abstract class View {
+  constructor(public parent: Element, public model: User) {
+    this.bindModel();
+  }
+
+  abstract eventsMap(): { [key: string]: () => void };
+  abstract template(): string;
+
+  bindModel(): void {
+    this.model.on('change', () => {
+      this.render();
+    })
+  }
+
+  bindEvents(fragment: DocumentFragment): void {
+    const eventsMap = this.eventsMap();
+
+    for (const eventKey in eventsMap) {
+      const [eventName, selector] = eventKey.split(':');
+
+      fragment.querySelectorAll(selector).forEach(element => {
+        element.addEventListener(eventName, eventsMap[eventKey]);
+      });
+    }
+    
+  }
+
+      //  wants to take the HTML from template, and inserts it into the DOM.
+  render(): void {
+    this.parent.innerHTML = ''; // empty out parent element
+    const templateElement = document.createElement('template');
+    templateElement.innerHTML = this.template();
+
+    this.bindEvents(templateElement.content)
+
+    this.parent.append(templateElement.content);
+  }
+}
+```
+
+Need to extend UserForm to extend View:
+```typescript
+import { User } from "../models/User";
+import { View } from './View';
+
+export class UserForm extends View {
+  eventsMap(): { [key: string]: () => void } {
+    return {
+      'click:.set-age': this.onSetAgeClick,
+      'click:.set-name': this.onSetNameClick
+    }
+  }
+
+  onSetAgeClick = ():void => {
+    this.model.setRandomAge();
+  }
+
+  onSetNameClick = ():void => {
+    const input = this.parent.querySelector('input');
+    if(input) {
+      const name = input.value;
+      this.model.set({name});
+    }
+  }
+
+      // returns a string that contains some amount of HTML we want to show to the user
+  template(): string {
+    return `
+    <div>
+      <h1>User Form</h1>
+      <div>User name: ${this.model.get('name')}</div>
+      <div>User age: ${this.model.get('age')}</div>
+
+      <input />
+      <button class="set-age">Set Random Age</button>
+      <button class="set-name">Change Name</button>
+    </div>
+    `;
+  }
+}
+```
+
+
