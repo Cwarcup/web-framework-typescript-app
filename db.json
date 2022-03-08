@@ -24,6 +24,16 @@
       "name": "Curtis",
       "age": 20,
       "id": 5
+    },
+    {
+      "name": "NEW NAME",
+      "age": 61,
+      "id": 6
+    },
+    {
+      "name": "Hello",
+      "age": 53,
+      "id": 7
     }
   ]
 }

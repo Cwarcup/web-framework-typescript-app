@@ -1,4 +1,4 @@
-import { Model } from '../models/Model';
+import { Model } from '../models/Models';
 
 export abstract class View<T extends Model<K>, K> {
   regions: { [key: string]: Element } = {};
@@ -48,10 +48,12 @@ export abstract class View<T extends Model<K>, K> {
     }
   }
 
+// where we will do view nesting
   onRender(): void {}
 
+  //  want to take the HTML from template, and inserts it into the DOM.
   render(): void {
-    this.parent.innerHTML = '';
+    this.parent.innerHTML = ''; // empty out parent element
 
     const templateElement = document.createElement('template');
     templateElement.innerHTML = this.template();
@@ -61,6 +63,7 @@ export abstract class View<T extends Model<K>, K> {
 
     this.onRender();
 
+    // rendering HTML to DOM
     this.parent.append(templateElement.content);
   }
 }

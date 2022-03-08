@@ -1607,12 +1607,11 @@ Now we need to find a way to **nest our views**.
 //In "Views.ts"
 
 //...
-// where we will do view nesting
   onRender(): void {};
 
-//  wants to take the HTML from template, and inserts it into the DOM.
+
   render(): void {
-    this.parent.innerHTML = ''; // empty out parent element
+    this.parent.innerHTML = ''; 
     const templateElement = document.createElement('template');
     templateElement.innerHTML = this.template();
 
