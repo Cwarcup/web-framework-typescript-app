@@ -1455,3 +1455,149 @@ export class User extends Model<UserProps>{
 //...
 }
 ```
+
+## Saving Data from a View
+
+Will be using a 'save' button to persist our model to the server. Can easily be done by using `save()` from the model class.
+
+```typescript
+// UserForm.ts
+export class UserForm extends View<User, UserProps> {
+  eventsMap(): { [key: string]: () => void } {
+    return {
+      'click:.set-age': this.onSetAgeClick,
+      'click:.set-name': this.onSetNameClick,
+      'click:.save-model': this.onSaveClick
+    }
+  }
+
+  //...
+
+  onSaveClick = ():void => {
+    this.model.save();
+  }
+
+      // returns a string that contains some amount of HTML we want to show to the user
+  template(): string {
+    return `
+    <div>
+      <input placeholder="${this.model.get('name')}" />
+      <button class="set-age">Set Random Age</button>
+      <button class="set-name">Change Name</button>
+      <button class="save-model">Save User</button>
+    </div>
+    `;
+  }
+}
+```
+
+### UserShow
+
+```typescript
+import { View } from './View';
+import { User, UserProps } from '../models/User';
+
+export class UserShow extends View<User, UserProps> {
+  //...
+}
+```
+Have an error under UserShow asking us to define `eventsMap()` and `template()` because in `Views.ts` we made these methods an **abstract function**, thus being **required.** Can fix this being going into `Views.ts` and making them into a normal method.
+
+```typescript
+//previous
+  abstract eventsMap(): { [key: string]: () => void };
+
+// new
+  eventsMap(): { [key: string]: () => void } {
+    return {};
+  };
+```
+
+Now to work on the `template()`. Want it to return an h1, name and age.
+
+So here is what we have:
+```typescript
+// UserShow.ts
+import { View } from './View';
+import { User, UserProps } from '../models/User';
+
+export class UserShow extends View<User, UserProps> {
+  template(): string {
+    return `
+    <div>
+      <h1>User Detail</h1>
+      <div>User Name: ${this.model.get('name')}</div>
+      <div>User Name: ${this.model.get('age')}</div>      
+    </div>
+    `;
+  }
+}
+```
+
+### UserEdit.ts
+```typescript
+import { User, UserProps } from "../models/User";
+import { View } from "./View";
+
+export class UserEdit extends View<User, UserProps> {
+  template(): string {
+    return `
+      <div>
+        <div class="user-show"></div>
+        <div class="user-form"></div>
+      </div>
+    `
+  }
+}
+```
+
+Now we have some nested Divs for our HTML from "UserShow.ts" and "UserForm.ts".
+But we need a way of inserting the HTML into these Divs.
+
+Whenever we render UserEdit, we need a reference to the "user-show" div.
+
+We are going to add some code to "View.ts"
+- class View
+  - add method regionMap()
+  - add object regions:[]
+
+Region Name: These will be our **keys**.
+- userShow
+- userForm
+
+Selector for Region: These will be our **values**.
+- .user-show
+- .user-form
+
+We are going to do a very similar method to `eventsMap()` in "Views.ts".
+```
+  eventsMap(): { [key: string]: () => void } {
+    return {};
+  };
+
+```
+
+Once `regionMap()` has found the corresponding keys and values, it will then insert them into our empty object `regions: {}`. 
+
+Remember, a region is some element that we want to nest a View.
+
+```typescript
+// Views.ts
+regions: { [key: string]: Element } = {};
+
+ regionsMap(): { [key: string]: string } {
+    return {};
+  }
+
+    mapRegions(fragment: DocumentFragment): void {
+    const regionsMap = this.regionsMap();
+
+    for (let key in regionsMap) {
+      const selector = regionsMap[key];
+      const element = fragment.querySelector(selector);
+      if(element) {
+        this.regions[key] = element;
+      }
+    }
+  }
+```
