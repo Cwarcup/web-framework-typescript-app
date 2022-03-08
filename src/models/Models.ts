@@ -1,6 +1,5 @@
-import { AxiosPromise, AxiosResponse } from "axios";
+import { AxiosPromise, AxiosResponse } from 'axios';
 
-// need this to be a generic<T>
 interface ModelAttributes<T> {
   set(value: T): void;
   getAll(): T;
@@ -26,8 +25,8 @@ export class Model<T extends HasId> {
     private attributes: ModelAttributes<T>,
     private events: Events,
     private sync: Sync<T>
-  ){}
-  
+  ) {}
+
   on = this.events.on;
   trigger = this.events.trigger;
   get = this.attributes.get;
@@ -52,12 +51,15 @@ export class Model<T extends HasId> {
   }
 
   save(): void {
-    this.sync.save(this.attributes.getAll())
-      .then((response: AxiosResponse): void => {
-        this.trigger('save');
-      })
+    this.sync
+      .save(this.attributes.getAll())
+      .then(
+        (response: AxiosResponse): void => {
+          this.trigger('save');
+        }
+      )
       .catch(() => {
         this.trigger('error');
-      })
+      });
   }
 }

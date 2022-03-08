@@ -19,12 +19,12 @@ export class UserForm extends View<User, UserProps> {
     if(input) {
       const name = input.value;
       this.model.set({name});
-    }
-  }
+    };
+  };
 
   onSaveClick = ():void => {
     this.model.save();
-  }
+  };
 
       // returns a string that contains some amount of HTML we want to show to the user
   template(): string {
@@ -36,5 +36,5 @@ export class UserForm extends View<User, UserProps> {
       <button class="save-model">Save User</button>
     </div>
     `;
-  }
+  };
 }

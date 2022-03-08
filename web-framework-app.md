@@ -1601,3 +1601,31 @@ regions: { [key: string]: Element } = {};
     }
   }
 ```
+
+Now we need to find a way to **nest our views**.
+```typescript
+//In "Views.ts"
+
+//...
+// where we will do view nesting
+  onRender(): void {};
+
+//  wants to take the HTML from template, and inserts it into the DOM.
+  render(): void {
+    this.parent.innerHTML = ''; // empty out parent element
+    const templateElement = document.createElement('template');
+    templateElement.innerHTML = this.template();
+
+    this.bindEvents(templateElement.content);
+    this.mapRegions(templateElement.content);
+
+    this.onRender()
+
+// render HTML to DOM
+    this.parent.append(templateElement.content);
+  }
+}
+
+
+
+```
