@@ -1413,4 +1413,6 @@ export class UserForm extends View {
 }
 ```
 
+Need to make sure `View.ts` does NOT have any reference to a **user** inside of it. Right now, View can only by modeled with class User. 
 
+Need to change View into a **generic class**.
