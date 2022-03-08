@@ -1130,7 +1130,7 @@ axios.get('http://localhost:3000/users')
 
 ```
 
-## Making class Collection Generic\
+## Making class Collection Generic
 Currently have:
 ```typescript
 import axios, { AxiosResponse } from "axios";
@@ -1416,3 +1416,42 @@ export class UserForm extends View {
 Need to make sure `View.ts` does NOT have any reference to a **user** inside of it. Right now, View can only by modeled with class User. 
 
 Need to change View into a **generic class**.
+
+```typescript
+//Views.ts
+import { Model } from "../models/Models";
+
+export abstract class View<T extends Model<K>, K> {
+  constructor(public parent: Element, public model: T) {
+    this.bindModel();
+  }
+  //...
+```
+This is pretty nasty `View<T extends Model<K>, K>`. Here we have made class `View` generic and expect it's values to be the class `Model`. However, Model is also a generic class (`export class Model<T extends HasId>`). Therefore, we need to add another argument for class `Model` when we define a new `View` class.
+
+This is saying `T` will have all the same properties as `Model` with `K` loaded into it. The definition of `K` is being passed as the second argument being passed in. 
+
+Remember, going back to Model:
+```typescript
+//Model.ts
+interface HasId {
+  id?: number;
+}
+
+export class Model<T extends HasId> {
+  //...
+}
+
+//User.ts
+export interface UserProps {
+  id?: number;
+  name?: string;
+  age?: number;
+}
+
+const rootUrl = 'http://localhost:3000/users';
+
+export class User extends Model<UserProps>{ 
+//...
+}
+```

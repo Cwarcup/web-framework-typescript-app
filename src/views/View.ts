@@ -1,12 +1,6 @@
-import { User } from "../models/User";
+import { Model } from "../models/Models";
 
-interface ModelForView {
-  // list out all the properties T is expected to have.
-  on(eventName: string, callback: () => void): void;
-
-}
-
-export abstract class View<T extends ModelForView> {
+export abstract class View<T extends Model<K>, K> {
   constructor(public parent: Element, public model: T) {
     this.bindModel();
   }
